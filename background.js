@@ -11,12 +11,12 @@ chrome.windows.onRemoved.addListener(function(id) {
                     var closed = data.filter(function(value) {
                         return value.hasOwnProperty('window');
                     })[0];
-                    tabGroupData[value.name] = closed.tabs;
-                    storage.set(tabGroupData, function() {
-                        return false;
-                    });
+                    console.log(closed);
+                    tabGroupData[value.name] = closed.window.tabs;
+                    storage.set(tabGroupData)
                 });
             });
+            return false;
         }
         return true;
     });

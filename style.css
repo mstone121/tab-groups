@@ -30,6 +30,23 @@ td.current-window {
     width: 19px;
 }
 
+p#error {
+    color: red;
+}
+
 div#delete-group {
     display: none;
+    background-color: LightPink;
+    margin-bottom: 20px;
 }
+
+div#legend {
+    Background-color: LemonChiffon;
+}
+
+div.info {
+    padding: 15px;
+    border-radius: 10px;
+}
+    
+    

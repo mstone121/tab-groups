@@ -4,6 +4,7 @@
     "name": "Tab Groups",
     "description": "Create, save, and re-open tab groups.",
     "version": "1.0",
+    "author": "Matt Stone",
 
     "browser_action": {
         "default_icon": "icon.png",

@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var currentWindowName = false;
     var currentWindowId = false;
 
-
     // Get window data
     chrome.windows.getCurrent(function(window) {        
         currentWindowId = parseInt(window.id);
@@ -34,7 +33,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!opened) {
             storage.get(function(tabGroupData) {
-                chrome.windows.create({url: tabGroupData[groupName], focused: true}, function(newWindow) {
+                var urls = tabGroupData[groupName].map(function(tab) {
+                    return tab.url;
+                });
+                chrome.windows.create({url: urls, focused: true}, function(newWindow) {
                     windowMap.push({
                         name: groupName,
                         id: newWindow.id
