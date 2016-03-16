@@ -26,6 +26,10 @@ td.buttons:hover {
     background-color: #f5f5f5
 }
 
+td.current-window {
+    width: 19px;
+}
+
 div#delete-group {
     display: none;
 }

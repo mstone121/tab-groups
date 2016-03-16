@@ -21,8 +21,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Group Funcs
-    var openTabGroup   = function(groupName) {
-        
+    var openTabGroup = function(groupName) {
+        var groupName = event.currentTarget.closest("tr").getAttribute("tab-group-name");
+        var opened = false;
+        windowMap.forEach(function(value) {
+            if (value.name == groupName) {
+                chrome.windows.update(value.id, {focused: true});
+                opened = true;
+                return;
+            }
+        });
+
+        if (!opened) {
+            storage.get(function(tabGroupData) {
+                chrome.windows.create({url: tabGroupData[groupName], focused: true}, function(newWindow) {
+                    windowMap.push({
+                        name: groupName,
+                        id: newWindow.id
+                    });
+                });
+            });
+        }
     };
 
     var deleteTabGroup = function(event) {
@@ -108,6 +127,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (tabGroupData) {
             console.log(tabGroupData);
             var table = document.getElementById("tab-groups");
+            var groupNames = windowMap.map(function(value) {
+                return value.name;
+            });
             for(var groupName in tabGroupData) {
                 var row = document.createElement("tr");
                 row.setAttribute("tab-group-name", groupName);
@@ -115,6 +137,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Status
                 var td_status = document.createElement("td");
                 td_status.className = "current-window";
+                var image = document.createElement("img");
+                if (groupName == currentWindowName) {
+                    image.setAttribute("src", "media/current.png");
+                    image.setAttribute("alt", "Current");
+                    td_status.appendChild(image);
+                } else if (groupNames.includes(groupName)) {
+                    image.setAttribute("src", "media/open.png");
+                    image.setAttribute("alt", "Open");
+                    td_status.appendChild(image);
+                }
                 row.appendChild(td_status);
 
                 // Name

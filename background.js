@@ -1,6 +1,27 @@
 var storage = chrome.storage.local;
 window.windowMap = [];
 
+
+chrome.windows.onRemoved.addListener(function(id) {
+    window.windowMap = window.windowMap.filter(function(value) {
+        if (value.id == id) {
+            storage.get(function(tabGroupData) {
+                // Get window data from most recently closed window
+                chrome.sessions.getRecentlyClosed(function(data) {
+                    var closed = data.filter(function(value) {
+                        return value.hasOwnProperty('window');
+                    })[0];
+                    tabGroupData[value.name] = closed.tabs;
+                    storage.set(tabGroupData, function() {
+                        return false;
+                    });
+                });
+            });
+        }
+        return true;
+    });
+});
+
 var initExtension = function() {
     chrome.windows.getAll({populate: true}, function(windows) {
         windows.forEach(function(value) {
@@ -14,7 +35,7 @@ var initExtension = function() {
                         return tab.url;
                     }).sort();
 
-
+                    // Check for same group of urls, if so then assign window id to group name
                     if (local_urls.length == window_urls.length) {
                         var equal = true;
                         for (var i = 0; i < local_urls.length; i++) {
@@ -36,6 +57,6 @@ var initExtension = function() {
             });
         });
     });
-}
+};
 
 initExtension();
