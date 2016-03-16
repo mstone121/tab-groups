@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  
+  <head>
+    <title>Tab Groups</title>
+    <style>
+      
+    </style>
+    <script src="popup.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+  </head>
+  
+  <body>
+    <h3>Tab Groups</h3>
+    <p>Current Window: <span id="current-window"></span></p>
+
+    <br><br>
+    
+    <table id="tab-groups">
+      <tr>
+        <th>Current</th>
+        <th>Name</th>
+        <th></th>
+        <th></th>
+      </tr>
+    </table>
+
+    <br><br>
+
+    <p>Create New:</p>
+    <input  id="group-name" type="text" width="300px" />
+    <button id="create-new">Save</button>
+    <p id="error"></p>
+
+    <br><br>
+
+    <div id="delete-group">
+      <p>Are you sure you want to delete the group <span id="delete-msg"></span>?</p><br>
+      <button id="delete-yes">Yes</button>
+      <button id="delete-no" >No</button>
+    </div>
+                                     
+
+  </body>
+  
+</html>
+
