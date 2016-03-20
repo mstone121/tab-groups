@@ -1,7 +1,6 @@
 var storage = chrome.storage.local;
 window.windowMap = [];
 
-
 chrome.windows.onRemoved.addListener(function(id) {
     window.windowMap = window.windowMap.filter(function(value) {
         if (value.id == id) {
@@ -11,9 +10,12 @@ chrome.windows.onRemoved.addListener(function(id) {
                     var closed = data.filter(function(value) {
                         return value.hasOwnProperty('window');
                     })[0];
-                    console.log(closed);
                     tabGroupData[value.name] = closed.window.tabs;
-                    storage.set(tabGroupData)
+                    storage.set(tabGroupData, function() {
+                        if (chrome.runtime.lastError) {
+                            console.log(chrome.runtime.lastError.message);
+                        }
+                    });
                 });
             });
             return false;
@@ -21,6 +23,50 @@ chrome.windows.onRemoved.addListener(function(id) {
         return true;
     });
 });
+
+var saveTabsInWindow = function(id) {
+    window.windowMap.forEach(function(value) {
+        if (value.id == id) {            
+            chrome.tabs.getAllInWindow(value.id, function(tabs) {
+                var data = {};
+                data[value.name] = tabs;
+                storage.set(data, function() {
+                    if (chrome.runtime.lastError) {
+                        console.log(chrome.runtime.lastError.message);
+                    }
+                });
+            });
+        }
+    });
+};
+
+// Tab event listeners 
+// chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+//     saveTabsInWindow(tab.windowId);
+// });
+
+chrome.tabs.onMoved.addListener(function(tabId, moveInfo) {
+    saveTabsInWindow(moveInfo.windowId);
+});
+
+// chrome.tabs.onActivated.addListener(function(activeInfo) {
+//     saveTabsInWindow(activeInfo.windowId);
+// });
+
+chrome.tabs.onDetached.addListener(function(tabId, detachInfo) {
+    saveTabsInWindow(detachInfo.windowId);
+});
+
+chrome.tabs.onAttached.addListener(function(tabId, attachInfo) {
+    saveTabsInWindow(attachInfo.windowId);
+});
+
+chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
+    if (!removeInfo.isWindowClosing) {
+        saveTabsInWindow(removeInfo.windowId);
+    }
+});
+
 
 var initExtension = function() {
     chrome.windows.getAll({populate: true}, function(windows) {

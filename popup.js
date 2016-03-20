@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     var storage = chrome.storage.local;
-    var windowMap = chrome.extension.getBackgroundPage().windowMap;
+    var bgPage = chrome.extension.getBackgroundPage();
+    var windowMap = bgPage.windowMap;
     var currentWindowName = false;
     var currentWindowId = false;
 
@@ -18,13 +19,14 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById("current-window").innerText = output;
     });
 
-
-    // Group Funcs
-    var openTabGroup = function(groupName) {
-        var groupName = event.currentTarget.closest("tr").getAttribute("tab-group-name");
+    // Group Funcs    
+    var openTabGroup = function(event) {
+        var groupName = getGroupNameFromEvent(event);
         var opened = false;
+        
         windowMap.forEach(function(value) {
             if (value.name == groupName) {
+                // Window already open, switch
                 chrome.windows.update(value.id, {focused: true});
                 opened = true;
                 return;
@@ -35,21 +37,41 @@ document.addEventListener('DOMContentLoaded', function () {
             storage.get(function(tabGroupData) {
                 var urls = tabGroupData[groupName].map(function(tab) {
                     return tab.url;
+                }).sort(function(a, b) {
+                    return a.index - b.index
                 });
-                chrome.windows.create({url: urls, focused: true}, function(newWindow) {
-                    windowMap.push({
+
+                chrome.windows.create({
+                    url: urls,
+                    focused: true,
+                }, function(newWindow) {
+                    // Refer from bg page to update ON bg page
+                    bgPage.windowMap.push({
                         name: groupName,
                         id: newWindow.id
                     });
+                    location.reload();
                 });
             });
         }
     };
 
+    var closeTabGroup = function(event) {
+        var groupName = getGroupNameFromEvent(event);
+        bgPage.windowMap = windowMap.filter(function(value) {
+            if (value.name == groupName) {
+                chrome.windows.remove(value.id);
+                return false;
+            }
+            return true;
+        });
+        location.reload();
+    };
+
     var deleteTabGroup = function(event) {
 
         // Reset message
-        var groupName = event.currentTarget.closest("tr").getAttribute("tab-group-name");
+        var groupName = getGroupNameFromEvent(event);
         var msg = document.getElementById("delete-msg");
         msg.innerText = groupName;
 
@@ -93,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 tabGroupData[groupName] = tabs;
                 storage.set(tabGroupData, function() {
                     // Attach prop to current window
-                    windowMap.push({
+                    bgPage.windowMap.push({
                         name: groupName,
                         id: currentWindowId
                     });
@@ -105,12 +127,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
 
+    var getGroupNameFromEvent = function(event) {
+        return event.currentTarget.closest("tr").getAttribute("tab-group-name");
+    };
 
     // Event Listeners
     document.getElementById("delete-yes").addEventListener('click', function() {
         var groupName = document.getElementById("delete-msg").innerText.trim();
         storage.remove(groupName, function() {
-            windowMap.filter(function(value) {
+            // Remove from window map
+            bgPage.windowMap = windowMap.filter(function(value) {
                 return (window.name != groupName);
             });
             location.reload();
@@ -127,7 +153,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Get Tab Data from Storage
     storage.get(function(tabGroupData) {
         if (tabGroupData) {
-            console.log(tabGroupData);
             var table = document.getElementById("tab-groups");
             var groupNames = windowMap.map(function(value) {
                 return value.name;
@@ -161,10 +186,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 var td_open = document.createElement("td");
                 td_open.className = "buttons";
                 var td_open_link = document.createElement("a");
-                td_open_link.innerText = "Open"
-                td_open.addEventListener('click', openTabGroup);
+                if (groupName != currentWindowName) {
+                    td_open_link.innerText = "Open";
+                    td_open.addEventListener('click', openTabGroup);
+                }
                 td_open.appendChild(td_open_link);
                 row.appendChild(td_open);
+
+                // Close Link
+                var td_close = document.createElement("td");
+                td_close.className = "buttons";
+                var td_close_link = document.createElement("a");
+                if (groupNames.includes(groupName)) {
+                    td_close_link.innerText = "Close";
+                    td_close.addEventListener('click', closeTabGroup);
+                }
+                td_close.appendChild(td_close_link);
+                row.appendChild(td_close);
 
                 // Delete Link
                 var td_delete = document.createElement("td");
