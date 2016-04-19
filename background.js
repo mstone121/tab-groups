@@ -68,6 +68,7 @@ chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
 });
 
 
+// All this function really does is map id's to group names
 var initExtension = function() {
     chrome.windows.getAll({populate: true}, function(windows) {
         windows.forEach(function(value) {
@@ -82,27 +83,29 @@ var initExtension = function() {
                     }).sort();
 
                     // Check for same group of urls, if so then assign window id to group name
-                    if (local_urls.length == window_urls.length) {
-                        var equal = true;
-                        for (var i = 0; i < local_urls.length; i++) {
-                            if (local_urls[i] !== window_urls[i]) {
-                                equal = false;
-                                break;
-                            }
+                    var equal = 0.0;
+                    for (var i = 0; i < local_urls.length; i++) {
+                        if (local_urls[i] == window_urls[i]) {
+                            equal++;
                         }
-
-                        if (equal) {
-                            window.windowMap.push({
-                                name: groupName,
-                                id: value.id
-                            });
-                            return;
-                        }
+                    }
+                    if ((equal / local_urls.length) > .7) {
+                        window.windowMap.push({
+                            name: groupName,
+                            id: value.id
+                        });
+                        return;
                     }
                 }
             });
         });
     });
 };
+
+// Refresh map when new window opens
+chrome.windows.onCreated.addListener(function(window) {
+    initExtension();
+});
+
 
 initExtension();
