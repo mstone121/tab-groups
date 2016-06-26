@@ -7,7 +7,7 @@ chrome.windows.onRemoved.addListener(function(id) {
             storage.get(function(tabGroupData) {
                 // Get window data from most recently closed window
                 chrome.sessions.getRecentlyClosed(function(data) {
-                    var closed = data.filter(function(value) {
+                    var closed = tabGroupData.filter(function(value) {
                         return value.hasOwnProperty('window');
                     })[0];
                     tabGroupData[value.name] = closed.window.tabs;

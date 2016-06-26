@@ -38,13 +38,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 var urls = tabGroupData[groupName].map(function(tab) {
                     return tab.url;
                 }).sort(function(a, b) {
-                    return a.index - b.index
+                    return a.index - b.index;
                 });
 
                 chrome.windows.create({
                     url: urls,
                     focused: true,
                 }, function(newWindow) {
+                    // Update properties of new window
+                    const props = ["selected", "highlighted", "active", "pinned"];
+                    newWindow.tabs.forEach(function(tab) {
+                        tabGroupData[groupName].forEach(function(info) {
+                            if (tab.url == info.url) {
+                                var updateProps = {};
+                                props.forEach(function(prop) {
+                                    updateProps[prop] = info[prop];
+                                });
+                                updateProps.muted = info.mutedInfo.muted;
+                                chrome.tabs.update(tab.id, updateProps);
+                                return;
+                            }
+                        });
+                    });
+                    
                     // Refer from bg page to update ON bg page
                     bgPage.windowMap.push({
                         name: groupName,
