@@ -135,7 +135,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         name: groupName,
                         id: currentWindowId
                     });
-                        
+
+                    // Update Context Menu Items
+                    window.addContextMenuItems();
+
                     // Reload to update tablep
                     location.reload();
                 });

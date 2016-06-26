@@ -100,12 +100,58 @@ var initExtension = function() {
             });
         });
     });
+    // Add Context Menu Items
+    window.addContextMenuItems();
 };
+
+window.addContextMenuItems = function() {
+    chrome.contextMenus.removeAll();
+    storage.get(function(tabGroupData) {
+        for (var groupName in tabGroupData) {
+            chrome.contextMenus.create({
+                id: groupName,
+                title: "Add to group " + groupName,
+                contexts: ["page", "frame", "link"],
+                onclick: function(info, tab) {
+                    if (info.linkUrl != null)
+                        addToTabGroup(info.menuItemId, info.linkUrl);
+                    else
+                        addToTabGroup(info.menuItemId, tab);
+                }
+            });
+        }
+    });
+};
+
+function addToTabGroup(groupName, tab) {
+    storage.get(function(tabGroupData) {
+        var match = window.windowMap.filter(function(window) {
+            return window.name == groupName;
+        });
+        var windowOpen = (match && match[0]);
+            
+        chrome.tabs.create({
+            url: (typeof(tab) == "string") ? tab : tab.url,
+            windowId: (windowOpen) ? match[0].id : null,
+            active: false,
+            selected: false
+        }, function(newTab) {
+            tabGroupData[groupName].push(newTab);
+            if (!windowOpen) {
+                chrome.tabs.remove(newTab.id);
+            }
+            storage.set(tabGroupData, function() {
+                if (chrome.runtime.lastError) {
+                    console.log(chrome.runtime.lastError.message);
+                }
+            });
+        });
+    });
+}
 
 // Refresh map when new window opens
 chrome.windows.onCreated.addListener(function(window) {
     initExtension();
 });
-
 
 initExtension();
